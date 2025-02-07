@@ -45,6 +45,17 @@ export function registerOpenSearchRoutes(
 ): void {
   router.get(
     {
+      path: `${BASE_NODE_API_PATH}/version`,
+      validate: {
+        params: schema.object({
+          pattern: schema.string(),
+        }),
+      },
+    },
+    opensearchRoutesService.catIndices
+  );
+  router.get(
+    {
       path: `${CAT_INDICES_NODE_API_PATH}/{pattern}`,
       validate: {
         params: schema.object({
@@ -392,6 +403,39 @@ export class OpenSearchRoutesService {
         index: pattern,
         format: 'json',
         h: 'health,index',
+      });
+
+      // re-formatting the index results to match Index
+      const cleanedIndices = response.map((index: any) => ({
+        name: index.index,
+        health: index.health,
+      })) as Index[];
+
+      return res.ok({ body: cleanedIndices });
+    } catch (err: any) {
+      return generateCustomError(res, err);
+    }
+  };
+
+  getVersion = async (
+    context: RequestHandlerContext,
+    req: OpenSearchDashboardsRequest,
+    res: OpenSearchDashboardsResponseFactory
+  ): Promise<IOpenSearchDashboardsResponse<any>> => {
+    const { data_source_id = '' } = req.params as { data_source_id?: string };
+
+    try {
+      const callWithRequest = getClientBasedOnDataSource(
+        context,
+        this.dataSourceEnabled,
+        req,
+        data_source_id,
+        this.client
+      );
+
+      const response = await callWithRequest('cat.indices', {
+        index: pattern,
+        format: 'json',
       });
 
       // re-formatting the index results to match Index

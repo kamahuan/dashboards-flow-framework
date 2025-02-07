@@ -116,7 +116,7 @@ export function ProcessorsList(props: ProcessorsListProps) {
       return;
     }
 
-    if (dataSourceId) {
+    if (dataSourceId !== undefined) {
       getEffectiveVersion(dataSourceId)
         .then((ver) => {
           setVersion(ver);

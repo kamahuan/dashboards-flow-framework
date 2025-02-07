@@ -28,7 +28,7 @@ import {
 } from '../../../store';
 import { enrichPresetWorkflowWithUiMetadata } from './utils';
 import { getDataSourceId, isDataSourceReady } from '../../../utils';
-import { getDataSourceEnabled } from '../../../services';
+import { getCore, getDataSourceEnabled } from '../../../services';
 import semver from 'semver';
 import { DataSourceAttributes } from '../../../../../../src/plugins/data_source/common/data_sources';
 import { getSavedObjectsClient } from '../../../../public/services';
@@ -46,6 +46,13 @@ export const getEffectiveVersion = async (
   try {
     if (dataSourceId === undefined) {
       throw new Error('Data source is required');
+    }
+
+    if (dataSourceId === '') {
+      const response = await getCore().http.post('/api/console/proxy', {
+        query: { path: '/', method: 'GET', dataSourceId: '' },
+      });
+      return response.version.number;
     }
 
     const dataSource = await getSavedObjectsClient().get<DataSourceAttributes>(
@@ -71,7 +78,7 @@ const filterPresetsByVersion = async (
     return workflows;
   }
 
-  if (!dataSourceId) {
+  if (dataSourceId === undefined) {
     return [];
   }
 
@@ -162,7 +169,7 @@ export function NewWorkflow(props: NewWorkflowProps) {
         return;
       }
 
-      if (!dataSourceId) {
+      if (dataSourceId === undefined) {
         setAllWorkflows([]);
         setFilteredWorkflows([]);
         setIsVersionLoading(true);
