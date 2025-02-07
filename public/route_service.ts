@@ -144,6 +144,7 @@ export interface RouteService {
     pipelineId: string,
     dataSourceId?: string
   ) => Promise<any | HttpFetchError>;
+  getLocalClusterVersion: () => Promise<any | HttpFetchError>;
 }
 
 export function configureRoutes(core: CoreStart): RouteService {
@@ -301,6 +302,14 @@ export function configureRoutes(core: CoreStart): RouteService {
         const response = await core.http.get<{ respString: string }>(
           `${url}/${index}`
         );
+        return response;
+      } catch (e: any) {
+        return e as HttpFetchError;
+      }
+    },
+    getLocalClusterVersion: async () => {
+      try {
+        const response = await core.http.get<{ respString: string }>(`/`);
         return response;
       } catch (e: any) {
         return e as HttpFetchError;
