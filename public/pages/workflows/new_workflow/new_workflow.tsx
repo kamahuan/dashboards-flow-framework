@@ -25,7 +25,6 @@ import {
   getWorkflowPresets,
   searchModels,
   searchConnectors,
-  getVersion,
 } from '../../../store';
 import { enrichPresetWorkflowWithUiMetadata } from './utils';
 import { getDataSourceId, isDataSourceReady } from '../../../utils';
@@ -39,6 +38,7 @@ import {
   MINIMUM_FULL_SUPPORTED_VERSION,
 } from '../../../../common/constants';
 import { getRouteService } from '../../../services';
+import { getLocalClusterVersion } from '../../../store/reducers/opensearch_reducer';
 
 interface NewWorkflowProps {}
 
@@ -117,9 +117,11 @@ export function NewWorkflow(props: NewWorkflowProps) {
   const dataSourceId = getDataSourceId();
   const dataSourceEnabled = getDataSourceEnabled().enabled;
   // workflows state
-  const { presetWorkflows, loading, versionLoading } = useSelector(
-    (state: AppState) => state.presets
+  const { presetWorkflows } = useSelector((state: AppState) => state.presets);
+  const { loading, localClusterVersion } = useSelector(
+    (state: AppState) => state.opensearch
   );
+
   const [allWorkflows, setAllWorkflows] = useState<WorkflowTemplate[]>([]);
   const [filteredWorkflows, setFilteredWorkflows] = useState<
     WorkflowTemplate[]
@@ -144,7 +146,7 @@ export function NewWorkflow(props: NewWorkflowProps) {
       );
     }
     if (dataSourceId === '') {
-      dispatch(getVersion(dataSourceId));
+      dispatch(getLocalClusterVersion());
     }
   }, [dataSourceId, dataSourceEnabled]);
 
@@ -192,7 +194,7 @@ export function NewWorkflow(props: NewWorkflowProps) {
     };
 
     loadWorkflows();
-  }, [presetWorkflows, dataSourceId, dataSourceEnabled]);
+  }, [presetWorkflows, dataSourceId, dataSourceEnabled, localClusterVersion]);
 
   // When search query updated, re-filter preset list
   useEffect(() => {
@@ -213,7 +215,7 @@ export function NewWorkflow(props: NewWorkflowProps) {
         />
       </EuiFlexItem>
       <EuiFlexItem>
-        {loading || versionLoading ? (
+        {loading ? (
           <EuiFlexGroup
             justifyContent="center"
             alignItems="center"
