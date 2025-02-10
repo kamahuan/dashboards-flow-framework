@@ -309,12 +309,15 @@ export function configureRoutes(core: CoreStart): RouteService {
     },
     getLocalClusterVersion: async () => {
       try {
-        const response = await core.http.get<{ respString: string }>(`/`);
-        return response;
+        const response = await core.http.post('/api/console/proxy', {
+          query: { path: '/', method: 'GET', dataSourceId: '' },
+        });
+        return response.version.number;
       } catch (e: any) {
         return e as HttpFetchError;
       }
     },
+
     getIndex: async (index: string, dataSourceId?: string) => {
       try {
         const url = dataSourceId

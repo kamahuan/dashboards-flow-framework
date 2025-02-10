@@ -25,10 +25,11 @@ import {
   getWorkflowPresets,
   searchModels,
   searchConnectors,
+  getVersion,
 } from '../../../store';
 import { enrichPresetWorkflowWithUiMetadata } from './utils';
 import { getDataSourceId, isDataSourceReady } from '../../../utils';
-import { getCore, getDataSourceEnabled } from '../../../services';
+import { getDataSourceEnabled } from '../../../services';
 import semver from 'semver';
 import { DataSourceAttributes } from '../../../../../../src/plugins/data_source/common/data_sources';
 import { getSavedObjectsClient } from '../../../../public/services';
@@ -37,6 +38,7 @@ import {
   MIN_SUPPORTED_VERSION,
   MINIMUM_FULL_SUPPORTED_VERSION,
 } from '../../../../common/constants';
+import { getRouteService } from '../../../services';
 
 interface NewWorkflowProps {}
 
@@ -49,10 +51,8 @@ export const getEffectiveVersion = async (
     }
 
     if (dataSourceId === '') {
-      const response = await getCore().http.post('/api/console/proxy', {
-        query: { path: '/', method: 'GET', dataSourceId: '' },
-      });
-      return response.version.number;
+      // Use route service for local cluster case
+      return await getRouteService().getLocalClusterVersion();
     }
 
     const dataSource = await getSavedObjectsClient().get<DataSourceAttributes>(
@@ -117,14 +117,13 @@ export function NewWorkflow(props: NewWorkflowProps) {
   const dataSourceId = getDataSourceId();
   const dataSourceEnabled = getDataSourceEnabled().enabled;
   // workflows state
-  const { presetWorkflows, loading } = useSelector(
+  const { presetWorkflows, loading, versionLoading } = useSelector(
     (state: AppState) => state.presets
   );
   const [allWorkflows, setAllWorkflows] = useState<WorkflowTemplate[]>([]);
   const [filteredWorkflows, setFilteredWorkflows] = useState<
     WorkflowTemplate[]
   >([]);
-  const [isVersionLoading, setIsVersionLoading] = useState(false);
 
   // search bar state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -143,6 +142,9 @@ export function NewWorkflow(props: NewWorkflowProps) {
       dispatch(
         searchConnectors({ apiBody: FETCH_ALL_QUERY_LARGE, dataSourceId })
       );
+    }
+    if (dataSourceId === '') {
+      dispatch(getVersion(dataSourceId));
     }
   }, [dataSourceId, dataSourceEnabled]);
 
@@ -165,18 +167,14 @@ export function NewWorkflow(props: NewWorkflowProps) {
         );
         setAllWorkflows(enrichedWorkflows);
         setFilteredWorkflows(enrichedWorkflows);
-        setIsVersionLoading(false);
         return;
       }
 
       if (dataSourceId === undefined) {
         setAllWorkflows([]);
         setFilteredWorkflows([]);
-        setIsVersionLoading(true);
         return;
       }
-
-      setIsVersionLoading(true);
 
       const version = await getEffectiveVersion(dataSourceId);
 
@@ -191,7 +189,6 @@ export function NewWorkflow(props: NewWorkflowProps) {
 
       setAllWorkflows(versionFilteredWorkflows);
       setFilteredWorkflows(versionFilteredWorkflows);
-      setIsVersionLoading(false);
     };
 
     loadWorkflows();
@@ -216,7 +213,7 @@ export function NewWorkflow(props: NewWorkflowProps) {
         />
       </EuiFlexItem>
       <EuiFlexItem>
-        {loading || isVersionLoading ? (
+        {loading || versionLoading ? (
           <EuiFlexGroup
             justifyContent="center"
             alignItems="center"
