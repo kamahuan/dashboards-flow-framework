@@ -117,10 +117,13 @@ export function NewWorkflow(props: NewWorkflowProps) {
   const dataSourceId = getDataSourceId();
   const dataSourceEnabled = getDataSourceEnabled().enabled;
   // workflows state
-  const { presetWorkflows } = useSelector((state: AppState) => state.presets);
-  const { loading, localClusterVersion } = useSelector(
+  const { presetWorkflows, loading: presetsLoading } = useSelector(
+    (state: AppState) => state.presets
+  );
+  const { loading: opensearchLoading, localClusterVersion } = useSelector(
     (state: AppState) => state.opensearch
   );
+  const isLoading = presetsLoading || opensearchLoading;
 
   const [allWorkflows, setAllWorkflows] = useState<WorkflowTemplate[]>([]);
   const [filteredWorkflows, setFilteredWorkflows] = useState<
@@ -215,7 +218,7 @@ export function NewWorkflow(props: NewWorkflowProps) {
         />
       </EuiFlexItem>
       <EuiFlexItem>
-        {loading ? (
+        {isLoading ? (
           <EuiFlexGroup
             justifyContent="center"
             alignItems="center"

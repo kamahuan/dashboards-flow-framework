@@ -9,6 +9,7 @@ import { HttpFetchError } from '../../../../../src/core/public';
 import { getRouteService } from '../../services';
 
 export const INITIAL_PRESETS_STATE = {
+  loading: false,
   errorMessage: '',
   presetWorkflows: [] as Partial<WorkflowTemplate>[],
 };
@@ -39,15 +40,18 @@ const presetsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(getWorkflowPresets.pending, (state, action) => {
+        state.loading = true;
         state.errorMessage = '';
       })
       .addCase(getWorkflowPresets.fulfilled, (state, action) => {
         state.presetWorkflows = action.payload.workflowTemplates as Partial<
           WorkflowTemplate
         >[];
+        state.loading = false;
         state.errorMessage = '';
       })
       .addCase(getWorkflowPresets.rejected, (state, action) => {
+        state.loading = false;
         state.errorMessage = action.payload as string;
       });
   },
