@@ -50,7 +50,6 @@ interface ResizableWorkspaceProps {
 }
 
 const WORKFLOW_INPUTS_PANEL_ID = 'workflow_inputs_panel_id';
-const PREVIEW_PANEL_ID = 'preview_panel_id';
 const TOOLS_PANEL_ID = 'tools_panel_id';
 
 /**
@@ -103,7 +102,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
             <EuiResizablePanel
               id={WORKFLOW_INPUTS_PANEL_ID}
               mode="main"
-              initialSize={60}
+              initialSize={50}
               minSize="25%"
               paddingSize="none"
               scrollable={false}
@@ -134,9 +133,9 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
             </EuiResizablePanel>
             <EuiResizableButton />
             <EuiResizablePanel
-              id={PREVIEW_PANEL_ID}
+              id={TOOLS_PANEL_ID}
               mode="collapsible"
-              initialSize={40}
+              initialSize={50}
               minSize="25%"
               paddingSize="none"
               borderRadius="l"
@@ -156,7 +155,6 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
       }}
     </EuiResizableContainer>
   ) : (
-    // Keep your existing invalid workflow display
     <EuiFlexGroup direction="column">
       <EuiFlexItem grow={3}>
         <EuiEmptyPrompt
