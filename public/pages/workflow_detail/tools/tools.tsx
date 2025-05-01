@@ -55,7 +55,6 @@ const PANEL_TITLE = 'Inspect flows';
  */
 export function Tools(props: ToolsProps) {
   const [workspaceKey, setWorkspaceKey] = useState<number>(0);
-
   // error message states. Error may come from several different sources.
   const { opensearch, workflows } = useSelector((state: AppState) => state);
   const opensearchError = opensearch.errorMessage;
