@@ -25,6 +25,7 @@ import {
   QueryParam,
   SearchResponse,
   Workflow,
+  WorkflowConfig,
   WorkflowFormValues,
 } from '../../../../common';
 import { Resources } from './resources';
@@ -36,6 +37,7 @@ import {
   hasProvisionedIngestResources,
   hasProvisionedSearchResources,
 } from '../../../utils';
+import { Workspace } from '../workspace';
 
 interface ToolsProps {
   workflow?: Workflow;
@@ -43,6 +45,7 @@ interface ToolsProps {
   selectedTabId: INSPECTOR_TAB_ID;
   setSelectedTabId: (tabId: INSPECTOR_TAB_ID) => void;
   selectedStep: CONFIG_STEP;
+  uiConfig?: WorkflowConfig;
 }
 
 const PANEL_TITLE = 'Inspect flows';
@@ -175,6 +178,14 @@ export function Tools(props: ToolsProps) {
           <EuiFlexGroup direction="column">
             <EuiFlexItem grow={true}>
               <>
+                {props.selectedTabId === INSPECTOR_TAB_ID.PREVIEW && (
+                  <div style={{ height: '100%', padding: '8px 0' }}>
+                    <Workspace
+                      workflow={props.workflow}
+                      uiConfig={props.uiConfig}
+                    />
+                  </div>
+                )}
                 {props.selectedTabId === INSPECTOR_TAB_ID.INGEST && (
                   <Ingest ingestResponse={props.ingestResponse} />
                 )}
