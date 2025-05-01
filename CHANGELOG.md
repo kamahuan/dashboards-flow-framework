@@ -15,6 +15,7 @@ Inspired from [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 ## [Unreleased 2.x](https://github.com/opensearch-project/anomaly-detection/compare/2.19...2.x)
 ### Features
 ### Enhancements
+#### Integrate preview panel into inspector panel ()
 ### Bug Fixes
 ### Infrastructure
 ### Documentation
