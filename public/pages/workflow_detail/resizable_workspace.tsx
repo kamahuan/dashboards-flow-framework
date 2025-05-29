@@ -189,13 +189,22 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         flexDirection: 'column',
       }}
     >
-      <div style={{ flex: 1, minHeight: 0 }}>
+      {/* Main workspace */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <EuiResizableContainer
-          key={`${leftNavOpen}`}
+          key={`${leftNavOpen}-${isConsolePanelOpen}`}
           direction="horizontal"
           style={{
             width: '100%',
             height: '100%',
+            flex: 1,
             gap: '4px',
           }}
         >
@@ -284,12 +293,12 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         </EuiResizableContainer>
       </div>
 
+      {/* Console panel */}
       <div
         style={{
           height: isConsolePanelOpen ? '300px' : '40px',
-          transition: 'height 0.2s ease',
-          borderTop: '1px solid #D3DAE6',
           flexShrink: 0,
+          borderTop: '1px solid #D3DAE6',
         }}
       >
         <EuiPanel
