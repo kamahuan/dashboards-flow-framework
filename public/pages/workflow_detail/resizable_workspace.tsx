@@ -187,24 +187,27 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        backgroundColor: 'rgba(0, 0, 255, 0.1)', // Blue tint for debugging
+        border: '2px solid blue',
       }}
     >
-      {/* Main workspace */}
+      {/* Main workspace - takes remaining space */}
       <div
         style={{
           flex: 1,
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
+          backgroundColor: 'rgba(0, 255, 0, 0.1)', // Green tint for debugging
+          border: '2px solid green',
         }}
       >
         <EuiResizableContainer
-          key={`${leftNavOpen}-${isConsolePanelOpen}`}
+          key={`${leftNavOpen}`}
           direction="horizontal"
           style={{
             width: '100%',
             height: '100%',
-            flex: 1,
             gap: '4px',
           }}
         >
@@ -293,12 +296,15 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         </EuiResizableContainer>
       </div>
 
-      {/* Console panel */}
+      {/* Console panel - fixed height, pushes content up */}
       <div
         style={{
           height: isConsolePanelOpen ? '300px' : '40px',
           flexShrink: 0,
           borderTop: '1px solid #D3DAE6',
+          transition: 'height 0.2s ease',
+          backgroundColor: 'rgba(255, 0, 0, 0.1)', // Red tint for debugging
+          border: '2px solid red',
         }}
       >
         <EuiPanel
