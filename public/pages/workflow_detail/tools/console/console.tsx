@@ -14,6 +14,7 @@ import {
 
 interface ConsoleProps {
   errorMessages: (string | ReactNode)[];
+  errorCount: number;
   ingestResponse: string;
 }
 
@@ -58,9 +59,7 @@ export function Console(props: ConsoleProps) {
                   </EuiText>
                 </EuiFlexItem>
                 <EuiFlexItem grow={false}>
-                  <EuiBadge color="danger">
-                    {props.errorMessages.length}
-                  </EuiBadge>
+                  <EuiBadge color="danger">{props.errorCount}</EuiBadge>
                 </EuiFlexItem>
               </EuiFlexGroup>
             }

@@ -116,9 +116,11 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
     ingestPipeline: ingestPipelineErrors,
     searchPipeline: searchPipelineErrors,
   } = useSelector((state: AppState) => state.errors);
+  // Error display messages and actual error count
   const [consoleErrorMessages, setConsoleErrorMessages] = useState<
     (string | ReactNode)[]
   >([]);
+  const [actualErrorCount, setActualErrorCount] = useState<number>(0);
 
   useEffect(() => {
     if (
@@ -129,43 +131,53 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
       props.workflow?.error
     ) {
       const errorMessages = [];
+      let errorCount = 0;
 
       if (!isEmpty(opensearchError)) {
         errorMessages.push(opensearchError);
+        errorCount += 1;
       }
       if (!isEmpty(workflowsError)) {
         errorMessages.push(workflowsError);
+        errorCount += 1;
       }
       if (props.workflow?.error) {
         errorMessages.push(props.workflow.error);
+        errorCount += 1;
       }
       if (!isEmpty(ingestPipelineErrors)) {
+        // Add header message (doesn't count as an error)
         errorMessages.push(
           'Data not ingested. Errors found with the following ingest processor(s):'
         );
-        errorMessages.push(
-          ...Object.values(ingestPipelineErrors).map((error) =>
-            formatProcessorError(error)
-          )
+        // Add actual errors (these count)
+        const ingestErrors = Object.values(ingestPipelineErrors).map((error) =>
+          formatProcessorError(error)
         );
+        errorMessages.push(...ingestErrors);
+        errorCount += ingestErrors.length;
       }
       if (!isEmpty(searchPipelineErrors)) {
+        // Add header message (doesn't count as an error)
         errorMessages.push(
           'Errors found with the following search processor(s):'
         );
-        errorMessages.push(
-          ...Object.values(searchPipelineErrors).map((error) =>
-            formatProcessorError(error)
-          )
+        // Add actual errors (these count)
+        const searchErrors = Object.values(searchPipelineErrors).map((error) =>
+          formatProcessorError(error)
         );
+        errorMessages.push(...searchErrors);
+        errorCount += searchErrors.length;
       }
 
       setConsoleErrorMessages(errorMessages);
+      setActualErrorCount(errorCount);
 
       // Auto-open console when errors are present
       setIsConsolePanelOpen(true);
     } else {
       setConsoleErrorMessages([]);
+      setActualErrorCount(0);
     }
   }, [
     opensearchError,
@@ -173,7 +185,6 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
     ingestPipelineErrors,
     searchPipelineErrors,
     props.workflow?.error,
-    // Removed isConsolePanelOpen from dependencies to prevent interference
   ]);
 
   useEffect(() => {
@@ -393,6 +404,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
               <div style={{ height: '100%', overflow: 'auto' }}>
                 <Console
                   errorMessages={consoleErrorMessages}
+                  errorCount={actualErrorCount}
                   ingestResponse={ingestResponse}
                 />
               </div>
