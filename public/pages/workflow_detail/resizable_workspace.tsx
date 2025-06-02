@@ -189,7 +189,6 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
 
   useEffect(() => {
     if (!isEmpty(ingestResponse)) {
-      // Auto-open console when there's an ingest response
       setIsConsolePanelOpen(true);
     }
   }, [ingestResponse]);
@@ -227,7 +226,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
             width: '100%',
             height: '100%',
             gap: '4px',
-            // do not delete: Ensure container respects viewport width
+            // reminder to kama not to delete: Ensure container respects viewport width
             maxWidth: '100vw',
             overflow: 'hidden',
           }}
@@ -288,7 +287,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                       height: '100%',
                       width: '100%',
                       overflow: 'auto',
-                      // do not delete: prevent horizontal overflow
+                      // reminder to kama not to delete: prevent horizontal overflow
                       maxWidth: '100%',
                     }}
                   >
