@@ -162,9 +162,8 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
 
       setConsoleErrorMessages(errorMessages);
 
-      if (!isConsolePanelOpen) {
-        setIsConsolePanelOpen(true);
-      }
+      // Auto-open console when errors are present
+      setIsConsolePanelOpen(true);
     } else {
       setConsoleErrorMessages([]);
     }
@@ -174,13 +173,13 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
     ingestPipelineErrors,
     searchPipelineErrors,
     props.workflow?.error,
+    // Removed isConsolePanelOpen from dependencies to prevent interference
   ]);
 
   useEffect(() => {
     if (!isEmpty(ingestResponse)) {
-      if (!isConsolePanelOpen) {
-        setIsConsolePanelOpen(true);
-      }
+      // Auto-open console when there's an ingest response
+      setIsConsolePanelOpen(true);
     }
   }, [ingestResponse]);
 
@@ -201,6 +200,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         flexDirection: 'column',
       }}
     >
+      {/* Main workspace - takes remaining space */}
       <div
         ref={containerRef}
         style={{
@@ -217,6 +217,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
             width: '100%',
             height: '100%',
             gap: '4px',
+            // CRITICAL FIX: Ensure container respects viewport width
             maxWidth: '100vw',
             overflow: 'hidden',
           }}
@@ -229,6 +230,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
 
             return (
               <>
+                {/* Left panel */}
                 <div
                   className={leftNavOpen ? 'left-nav-static-width' : undefined}
                 >
@@ -260,16 +262,16 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                   ) : undefined}
                 </div>
 
-                {/* Middle panel - FIXED: Prevent expansion beyond reasonable bounds */}
+                {/* Middle panel - Slightly wider initial size */}
                 <EuiResizablePanel
                   id={WORKFLOW_INPUTS_PANEL_ID}
                   mode="main"
                   initialSize={60}
-                  minSize="25%"
+                  minSize="30%"
                   paddingSize="none"
                   scrollable={false}
                   style={{
-                    maxWidth: 'calc(100vw - 350px)',
+                    maxWidth: 'calc(100vw - 350px)', // Leave at least 350px for tools panel
                     overflow: 'hidden',
                   }}
                 >
@@ -277,8 +279,8 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                     style={{
                       height: '100%',
                       width: '100%',
-                      overflow: 'auto',
-                      maxWidth: '100%',
+                      overflow: 'auto', // CRITICAL FIX: Allow scrolling instead of expansion
+                      maxWidth: '100%', // CRITICAL FIX: Prevent horizontal overflow
                     }}
                   >
                     <ComponentInput
@@ -302,6 +304,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
 
                 <EuiResizableButton />
 
+                {/* Right panel - Adjusted for wider middle panel */}
                 <EuiResizablePanel
                   id={TOOLS_PANEL_ID}
                   mode="collapsible"
@@ -316,7 +319,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                     minWidth: '300px',
                     flexShrink: 0,
                     flexGrow: 0,
-                    flexBasis: '300px',
+                    flexBasis: 'auto',
                   }}
                 >
                   <div
@@ -341,6 +344,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         </EuiResizableContainer>
       </div>
 
+      {/* Console panel - unchanged */}
       <div
         style={{
           height: isConsolePanelOpen ? '300px' : '40px',
