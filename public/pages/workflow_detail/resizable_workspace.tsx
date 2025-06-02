@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from 'react';
 import {
   EuiCodeBlock,
   EuiEmptyPrompt,
@@ -58,9 +64,7 @@ const TOOLS_PANEL_ID = 'tools_panel_id';
 export function ResizableWorkspace(props: ResizableWorkspaceProps) {
   const [isToolsPanelOpen, setIsToolsPanelOpen] = useState<boolean>(true);
   const [isConsolePanelOpen, setIsConsolePanelOpen] = useState<boolean>(false);
-  // The global state for selected component ID.
   const [selectedComponentId, setSelectedComponentId] = useState<string>('');
-
   const [leftNavOpen, setLeftNavOpen] = useState<boolean>(true);
 
   // misc ingest-related state required to be shared across the left nav
@@ -79,18 +83,79 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
   const onIngest = selectedComponentId.startsWith('ingest');
   const onSearch = selectedComponentId.startsWith('search');
 
-  const collapseFnHorizontal = useRef(
-    (id: string, options: { direction: 'left' | 'right' }) => {}
-  );
+  // Add debugging refs and effects
+  const toolsPanelRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const onToggleToolsChange = () => {
-    collapseFnHorizontal.current(TOOLS_PANEL_ID, { direction: 'right' });
+  // Track when isToolsPanelOpen changes and why
+  const prevToolsPanelOpen = useRef(isToolsPanelOpen);
+  useEffect(() => {
+    if (prevToolsPanelOpen.current !== isToolsPanelOpen) {
+      console.log(
+        `🔍 TOOLS PANEL STATE CHANGED: ${prevToolsPanelOpen.current} → ${isToolsPanelOpen}`
+      );
+      console.log('Stack trace:', new Error().stack);
+      prevToolsPanelOpen.current = isToolsPanelOpen;
+    }
+  }, [isToolsPanelOpen]);
+
+  // Monitor the actual DOM element
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const toolsPanel = document.getElementById(TOOLS_PANEL_ID);
+      if (toolsPanel) {
+        const computedStyle = window.getComputedStyle(toolsPanel);
+        const width = computedStyle.width;
+        const display = computedStyle.display;
+        const visibility = computedStyle.visibility;
+
+        console.log(
+          `🔍 DOM CHECK - Tools panel: width=${width}, display=${display}, visibility=${visibility}, collapsed=${toolsPanel.getAttribute(
+            'data-collapsed'
+          )}`
+        );
+
+        // Check if panel is effectively hidden
+        if (width === '0px' || display === 'none' || visibility === 'hidden') {
+          console.log('❌ TOOLS PANEL IS HIDDEN IN DOM!');
+        }
+      } else {
+        console.log('❌ TOOLS PANEL NOT FOUND IN DOM!');
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const collapseFnHorizontal = useRef<
+    (id: string, options: { direction: 'left' | 'right' }) => void
+  >(() => {});
+
+  const onToggleToolsChange = useCallback(() => {
+    console.log(
+      '🔧 onToggleToolsChange called, current state:',
+      isToolsPanelOpen
+    );
+    console.log('🔧 Stack trace:', new Error().stack);
+
+    // Check if collapseFnHorizontal is actually available
+    if (typeof collapseFnHorizontal.current === 'function') {
+      console.log('🔧 Calling collapseFnHorizontal.current');
+      collapseFnHorizontal.current(TOOLS_PANEL_ID, { direction: 'right' });
+    } else {
+      console.log('❌ collapseFnHorizontal.current is not a function!');
+    }
+
     setIsToolsPanelOpen(!isToolsPanelOpen);
-  };
+  }, [isToolsPanelOpen]);
 
-  const onToggleConsoleChange = () => {
+  const onToggleConsoleChange = useCallback(() => {
+    console.log(
+      '🔧 onToggleConsoleChange called, current state:',
+      isConsolePanelOpen
+    );
     setIsConsolePanelOpen(!isConsolePanelOpen);
-  };
+  }, [isConsolePanelOpen]);
 
   // Inspector panel state vars. Actions taken in the form can update the Inspector panel,
   // hence we keep top-level vars here to pass to both form and inspector components.
@@ -111,6 +176,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
   >([]);
 
   useEffect(() => {
+    console.log('Error useEffect triggered');
     if (
       !isEmpty(opensearchError) ||
       !isEmpty(ingestPipelineErrors) ||
@@ -153,6 +219,7 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
       setConsoleErrorMessages(errorMessages);
 
       if (!isConsolePanelOpen) {
+        console.log('Auto-opening console due to errors');
         setIsConsolePanelOpen(true);
       }
     } else {
@@ -167,8 +234,11 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
   ]);
 
   useEffect(() => {
-    if (!isEmpty(ingestResponse) && !isConsolePanelOpen) {
-      setIsConsolePanelOpen(true);
+    if (!isEmpty(ingestResponse)) {
+      console.log('Auto-opening console due to ingest response');
+      if (!isConsolePanelOpen) {
+        setIsConsolePanelOpen(true);
+      }
     }
   }, [ingestResponse]);
 
@@ -187,23 +257,20 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: 'rgba(0, 0, 255, 0.1)', // Blue tint for debugging
-        border: '2px solid blue',
       }}
     >
       {/* Main workspace - takes remaining space */}
       <div
+        ref={containerRef}
         style={{
           flex: 1,
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'rgba(0, 255, 0, 0.1)', // Green tint for debugging
-          border: '2px solid green',
         }}
       >
         <EuiResizableContainer
-          key={`${leftNavOpen}`}
+          key="debug-static-key"
           direction="horizontal"
           style={{
             width: '100%',
@@ -212,12 +279,47 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
           }}
         >
           {(EuiResizablePanel, EuiResizableButton, { togglePanel }) => {
+            console.log(
+              '🔍 ResizableContainer render - togglePanel available:',
+              !!togglePanel
+            );
+
+            // Track when togglePanel changes
             if (togglePanel) {
-              collapseFnHorizontal.current = (panelId: string, { direction }) =>
-                togglePanel(panelId, { direction });
+              const wrappedTogglePanel = (panelId: string, options: any) => {
+                console.log('🔧 TOGGLE PANEL CALLED:', panelId, options);
+                console.log('🔧 Stack trace:', new Error().stack);
+
+                // Check the panel state before and after
+                const beforeElement = document.getElementById(panelId);
+                if (beforeElement) {
+                  console.log(
+                    '🔍 Before toggle - width:',
+                    window.getComputedStyle(beforeElement).width
+                  );
+                }
+
+                const result = togglePanel(panelId, options);
+
+                setTimeout(() => {
+                  const afterElement = document.getElementById(panelId);
+                  if (afterElement) {
+                    console.log(
+                      '🔍 After toggle - width:',
+                      window.getComputedStyle(afterElement).width
+                    );
+                  }
+                }, 100);
+
+                return result;
+              };
+
+              collapseFnHorizontal.current = wrappedTogglePanel;
             }
+
             return (
               <>
+                {/* Left panel */}
                 <div
                   className={leftNavOpen ? 'left-nav-static-width' : undefined}
                 >
@@ -232,7 +334,14 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                       setIngestUpdateRequired={setIngestUpdateRequired}
                       setBlockNavigation={props.setBlockNavigation}
                       displaySearchPanel={() => {
+                        console.log(
+                          '🔍 displaySearchPanel called! isToolsPanelOpen:',
+                          isToolsPanelOpen
+                        );
                         if (!isToolsPanelOpen) {
+                          console.log(
+                            '🔧 About to call onToggleToolsChange from displaySearchPanel'
+                          );
                           onToggleToolsChange();
                         }
                         setSelectedInspectorTabId(INSPECTOR_TAB_ID.TEST);
@@ -248,6 +357,8 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                     />
                   ) : undefined}
                 </div>
+
+                {/* Middle panel */}
                 <EuiResizablePanel
                   id={WORKFLOW_INPUTS_PANEL_ID}
                   mode="main"
@@ -273,7 +384,10 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                     openLeftNav={() => setLeftNavOpen(true)}
                   />
                 </EuiResizablePanel>
+
                 <EuiResizableButton />
+
+                {/* Right panel - ADD DEBUGGING */}
                 <EuiResizablePanel
                   id={TOOLS_PANEL_ID}
                   mode="collapsible"
@@ -281,14 +395,57 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
                   minSize="25%"
                   paddingSize="none"
                   borderRadius="l"
-                  onToggleCollapsedInternal={() => onToggleToolsChange()}
+                  onToggleCollapsedInternal={() => {
+                    console.log(
+                      '🔧 Tools panel onToggleCollapsedInternal called'
+                    );
+                    console.log('🔧 Stack trace:', new Error().stack);
+                    onToggleToolsChange();
+                  }}
                 >
-                  <Tools
-                    workflow={props.workflow}
-                    selectedTabId={selectedInspectorTabId}
-                    setSelectedTabId={setSelectedInspectorTabId}
-                    uiConfig={props.uiConfig}
-                  />
+                  <div
+                    ref={toolsPanelRef}
+                    style={{
+                      border: '3px solid red',
+                      minHeight: '200px',
+                      backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                      padding: '20px',
+                    }}
+                  >
+                    <h3>TOOLS PANEL DEBUG</h3>
+                    <p>State: {isToolsPanelOpen ? 'OPEN' : 'CLOSED'}</p>
+                    <p>Time: {new Date().toLocaleTimeString()}</p>
+                    <p>Selected Component: {selectedComponentId}</p>
+                    <p>
+                      Console Panel: {isConsolePanelOpen ? 'OPEN' : 'CLOSED'}
+                    </p>
+
+                    {/* Temporarily replace Tools component with this debug content */}
+                    <div
+                      style={{
+                        marginTop: '20px',
+                        padding: '10px',
+                        border: '1px solid blue',
+                      }}
+                    >
+                      <h4>Original Tools Component Location</h4>
+                      <p>
+                        This is where the Tools component would be rendered.
+                      </p>
+                      <p>
+                        If you can see this red box, the panel structure is
+                        working.
+                      </p>
+                    </div>
+
+                    {/* Uncomment this to test with the real Tools component */}
+                    {/* <Tools
+                      workflow={props.workflow}
+                      selectedTabId={selectedInspectorTabId}
+                      setSelectedTabId={setSelectedInspectorTabId}
+                      uiConfig={props.uiConfig}
+                    /> */}
+                  </div>
                 </EuiResizablePanel>
               </>
             );
@@ -296,21 +453,28 @@ export function ResizableWorkspace(props: ResizableWorkspaceProps) {
         </EuiResizableContainer>
       </div>
 
-      {/* Console panel - fixed height, pushes content up */}
+      {/* Console panel with debugging */}
       <div
         style={{
           height: isConsolePanelOpen ? '300px' : '40px',
           flexShrink: 0,
           borderTop: '1px solid #D3DAE6',
           transition: 'height 0.2s ease',
-          backgroundColor: 'rgba(255, 0, 0, 0.1)', // Red tint for debugging
-          border: '2px solid red',
+          backgroundColor: 'rgba(0, 255, 0, 0.1)', // Green for debugging
+          border: '2px solid green',
         }}
       >
+        <div style={{ padding: '8px' }}>
+          <p style={{ margin: 0, fontWeight: 'bold' }}>
+            🐛 DEBUG INFO: Console: {isConsolePanelOpen ? 'OPEN' : 'CLOSED'} |
+            Tools Panel State: {isToolsPanelOpen ? 'OPEN' : 'CLOSED'}
+          </p>
+        </div>
+
         <EuiPanel
           paddingSize="s"
           style={{
-            height: '100%',
+            height: 'calc(100% - 40px)',
             display: 'flex',
             flexDirection: 'column',
             borderRadius: 0,
